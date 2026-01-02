@@ -1,0 +1,20 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run Pharmacy Web App",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/webapp/app.py",
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "FLASK_ENV": "development",
+        "PORT": "5001",
+        "PYTHONPATH": "${workspaceFolder}"
+      },
+      "console": "integratedTerminal",
+      "justMyCode": true
+    }
+  ]
+}
+

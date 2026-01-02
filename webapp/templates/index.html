@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pharmacy Inventory Optimization System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .landing-container {
+            max-width: 1200px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .hero {
+            padding: 60px 40px;
+            text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .hero h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+            animation: fadeInUp 0.8s;
+        }
+
+        .hero p {
+            font-size: 20px;
+            margin-bottom: 30px;
+            opacity: 0.9;
+            animation: fadeInUp 0.8s 0.2s backwards;
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 15px 40px;
+            background: white;
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 18px;
+            transition: all 0.3s;
+            animation: fadeInUp 0.8s 0.4s backwards;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .features {
+            padding: 60px 40px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+        }
+
+        .feature-card {
+            padding: 30px;
+            text-align: center;
+            border-radius: 15px;
+            background: #f9fafb;
+            transition: transform 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .feature-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        .feature-card h3 {
+            color: #1f2937;
+            margin-bottom: 10px;
+            font-size: 20px;
+        }
+
+        .feature-card p {
+            color: #6b7280;
+            line-height: 1.6;
+        }
+
+        .stats {
+            padding: 60px 40px;
+            background: #f9fafb;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 42px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            color: #6b7280;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+
+        .footer {
+            padding: 30px 40px;
+            text-align: center;
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 32px;
+            }
+
+            .hero p {
+                font-size: 16px;
+            }
+
+            .features {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="landing-container">
+        <div class="hero">
+            <h1>🏥 Pharmacy Inventory Optimization</h1>
+            <p>Real-time inventory management powered by AI, ML, and Operations Research</p>
+            <a href="/dashboard" class="cta-button">Open Dashboard →</a>
+        </div>
+
+        <div class="features">
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <h3>Real-time Streaming</h3>
+                <p>Process 10k+ prescriptions per second with Apache Kafka streaming architecture</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🤖</div>
+                <h3>AI Forecasting</h3>
+                <p>ARIMA, LSTM & Prophet ensemble models with uncertainty quantification</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3>Smart Optimization</h3>
+                <p>Robust OR-based inventory optimization using linear programming</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">💰</div>
+                <h3>Cost Reduction</h3>
+                <p>Achieve 30% cost savings while maintaining 99.95% service levels</p>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-value">99.95%</div>
+                <div class="stat-label">Fill Rate</div>
+            </div>
+
+            <div class="stat-item">
+                <div class="stat-value">&lt;10%</div>
+                <div class="stat-label">Waste</div>
+            </div>
+
+            <div class="stat-item">
+                <div class="stat-value">30%</div>
+                <div class="stat-label">Cost Savings</div>
+            </div>
+
+            <div class="stat-item">
+                <div class="stat-value">&lt;305ms</div>
+                <div class="stat-label">Latency</div>
+            </div>
+
+            <div class="stat-item">
+                <div class="stat-value">10k+</div>
+                <div class="stat-label">Throughput/sec</div>
+            </div>
+
+            <div class="stat-item">
+                <div class="stat-value">99.98%</div>
+                <div class="stat-label">Availability</div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p><strong>Final Year Engineering Project</strong></p>
+            <p>Pharmacy Inventory Optimization Using Streaming Data & OR-Based Forecasting</p>
+            <p style="margin-top: 10px;">Powered by Flask, Kafka, TensorFlow, and PuLP</p>
+        </div>
+    </div>
+</body>
+</html>

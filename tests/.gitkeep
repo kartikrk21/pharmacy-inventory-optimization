@@ -1,0 +1,22 @@
+
+
+echo "Creating .gitkeep files for empty directories..."
+
+# Create .gitkeep in directories that should be tracked but might be empty
+directories=(
+    "ml_models/trained_models"
+    "data_generation/data"
+    "logs"
+    "tests"
+    "webapp/static/uploads"
+    "webapp/static/downloads"
+    "database/backups"
+)
+
+for dir in "${directories[@]}"; do
+    mkdir -p "$dir"
+    touch "$dir/.gitkeep"
+    echo "Created $dir/.gitkeep"
+done
+
+echo "Done!"

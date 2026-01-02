@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pharmacy Inventory Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <h1>🏥 Pharmacy Inventory Optimization System</h1>
+        </header>
+
+        <!-- Real-time Metrics -->
+        <section class="metrics-section">
+            <div class="metric-card">
+                <h3>Fill Rate</h3>
+                <div class="metric-value" id="fillRate">99.95%</div>
+                <div class="metric-target">Target: 99.95%</div>
+            </div>
+            <div class="metric-card">
+                <h3>Waste %</h3>
+                <div class="metric-value" id="wastePercent">8%</div>
+                <div class="metric-target">Target: <10%</div>
+            </div>
+            <div class="metric-card">
+                <h3>Cost Reduction</h3>
+                <div class="metric-value" id="costReduction">25%</div>
+                <div class="metric-target">Target: 30%</div>
+            </div>
+            <div class="metric-card">
+                <h3>Latency</h3>
+                <div class="metric-value" id="latency">150ms</div>
+                <div class="metric-target">Target: <305ms</div>
+            </div>
+            <div class="metric-card">
+                <h3>Throughput</h3>
+                <div class="metric-value" id="throughput">12k/sec</div>
+                <div class="metric-target">Target: >10k/sec</div>
+            </div>
+            <div class="metric-card">
+                <h3>Availability</h3>
+                <div class="metric-value" id="availability">99.98%</div>
+                <div class="metric-target">Target: 99.95%</div>
+            </div>
+        </section>
+
+        <!-- Main Content -->
+        <div class="content-grid">
+            <!-- Real-time Stream -->
+            <div class="panel">
+                <h2>📊 Real-time Prescription Stream</h2>
+                <div class="stream-stats">
+                    <span>Total Prescriptions: <strong id="totalPrescriptions">0</strong></span>
+                    <span>Stream Rate: <strong id="streamRate">0/sec</strong></span>
+                </div>
+                <canvas id="streamChart"></canvas>
+            </div>
+
+            <!-- Inventory Status -->
+            <div class="panel">
+                <h2>📦 Inventory Status</h2>
+                <div class="inventory-filters">
+                    <select id="categoryFilter">
+                        <option value="all">All Categories</option>
+                        <option value="Antibiotics">Antibiotics</option>
+                        <option value="Analgesics">Analgesics</option>
+                        <option value="Cardiovascular">Cardiovascular</option>
+                    </select>
+                </div>
+                <div id="inventoryTable" class="data-table"></div>
+            </div>
+
+            <!-- Optimization Recommendations -->
+            <div class="panel">
+                <h2>💡 Order Recommendations</h2>
+                <div id="recommendationsTable" class="data-table"></div>
+            </div>
+
+            <!-- Alerts -->
+            <div class="panel">
+                <h2>⚠️ Alerts & Notifications</h2>
+                <div id="alertsList" class="alerts-container"></div>
+            </div>
+        </div>
+
+        <!-- Performance Charts -->
+        <section class="charts-section">
+            <div class="chart-panel">
+                <h3>System Latency (ms)</h3>
+                <canvas id="latencyChart"></canvas>
+            </div>
+            <div class="chart-panel">
+                <h3>Throughput (requests/sec)</h3>
+                <canvas id="throughputChart"></canvas>
+            </div>
+        </section>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>
