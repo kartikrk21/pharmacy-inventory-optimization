@@ -1,4 +1,4 @@
-// Dashboard JavaScript - FIXED for Socket.IO live updates
+// Dashboard JavaScript - FULLY DYNAMIC VERSION
 const socket = io();
 
 // State
@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ============================================================
-// SOCKET.IO LISTENERS - CRITICAL FIX
+// SOCKET.IO LISTENERS - FULLY DYNAMIC
 // ============================================================
 
 function setupSocketListeners() {
@@ -28,68 +28,72 @@ function setupSocketListeners() {
     socket.on('connect', () => {
         console.log('✅ Socket.IO connected!');
         showNotification('Connected to server', 'success');
-        
-        // Request initial state
         socket.emit('request_update');
     });
 
     socket.on('disconnect', () => {
-        console.log('⚠️  Socket.IO disconnected');
+        console.log('⚠️ Socket.IO disconnected');
         showNotification('Disconnected from server', 'error');
     });
 
-    socket.on('connection_status', (data) => {
-        console.log('📊 Connection status:', data);
-    });
-
-    // ============================================================
-    // MAIN STATE UPDATE HANDLER - This is where live updates happen
-    // ============================================================
+    // MAIN STATE UPDATE - All metrics update here
     socket.on('state_update', (state) => {
         console.log('📡 State update received:', state);
         
         // Update prescription count
         if (state.total_prescriptions !== undefined) {
             prescriptionCount = state.total_prescriptions;
-            const totalEl = document.getElementById('totalPrescriptions');
-            if (totalEl) {
-                totalEl.textContent = prescriptionCount;
-            }
+            updateElement('totalPrescriptions', prescriptionCount);
         }
         
         // Update stream rate
         if (state.stream_rate !== undefined) {
-            const rateEl = document.getElementById('streamRate');
-            if (rateEl) {
-                rateEl.textContent = state.stream_rate.toFixed(2) + '/sec';
-            }
+            updateElement('streamRate', state.stream_rate.toFixed(2) + '/sec');
         }
         
-        // Update metrics
-        updateMetricsFromState(state);
+        // Update all top metrics - NOW DYNAMIC!
+        if (state.fill_rate !== undefined) {
+            updateElement('fillRate', (state.fill_rate * 100).toFixed(2) + '%');
+        }
+        if (state.waste_percentage !== undefined) {
+            updateElement('wastePercent', (state.waste_percentage * 100).toFixed(0) + '%');
+        }
+        if (state.cost_reduction !== undefined) {
+            updateElement('costReduction', (state.cost_reduction * 100).toFixed(0) + '%');
+        }
+        if (state.avg_latency_ms !== undefined) {
+            updateElement('latency', Math.round(state.avg_latency_ms) + 'ms');
+        }
+        if (state.throughput !== undefined) {
+            updateElement('throughput', (state.throughput / 1000).toFixed(1) + 'k/sec');
+        }
+        if (state.availability !== undefined) {
+            updateElement('availability', (state.availability * 100).toFixed(2) + '%');
+        }
         
-        // Update inventory table if data present
+        // Update inventory table from live data
         if (state.inventory && Object.keys(state.inventory).length > 0) {
             updateInventoryFromState(state.inventory);
         }
         
-        // Update charts
-        if (prescriptionCount % 10 === 0) {
+        // Update stream chart
+        if (prescriptionCount > 0 && prescriptionCount % 10 === 0) {
             updateStreamChart(prescriptionCount);
         }
     });
 
+    // Metrics update for charts
     socket.on('metrics_update', (data) => {
         console.log('📊 Metrics update:', data);
         
         // Update latency chart
-        if (latencyChart && data.latency) {
+        if (latencyChart && data.latency !== undefined) {
             addDataToChart(latencyChart, data.latency);
         }
         
         // Update throughput chart
-        if (throughputChart && data.throughput) {
-            addDataToChart(throughputChart, data.throughput);
+        if (throughputChart && data.throughput !== undefined) {
+            addDataToChart(throughputChart, data.throughput / 1000); // Convert to k/sec
         }
     });
 
@@ -99,7 +103,6 @@ function setupSocketListeners() {
         await loadInitialData();
     });
 
-    // Connection error handling
     socket.on('connect_error', (error) => {
         console.error('❌ Socket.IO connection error:', error);
         showNotification('Connection error', 'error');
@@ -112,36 +115,15 @@ function setupSocketListeners() {
 // UPDATE FUNCTIONS
 // ============================================================
 
-function updateMetricsFromState(state) {
-    const fillRateEl = document.getElementById('fillRate');
-    const wasteEl = document.getElementById('wastePercent');
-    const costReductionEl = document.getElementById('costReduction');
-    const latencyEl = document.getElementById('latency');
-    const throughputEl = document.getElementById('throughput');
-    const availabilityEl = document.getElementById('availability');
-
-    if (fillRateEl && state.fill_rate) {
-        fillRateEl.textContent = (state.fill_rate * 100).toFixed(2) + '%';
-    }
-    if (wasteEl && state.waste_percentage) {
-        wasteEl.textContent = (state.waste_percentage * 100).toFixed(0) + '%';
-    }
-    if (costReductionEl && state.cost_reduction) {
-        costReductionEl.textContent = (state.cost_reduction * 100).toFixed(0) + '%';
-    }
-    if (latencyEl && state.avg_latency_ms) {
-        latencyEl.textContent = Math.round(state.avg_latency_ms) + 'ms';
-    }
-    if (throughputEl && state.throughput) {
-        throughputEl.textContent = (state.throughput / 1000).toFixed(1) + 'k/sec';
-    }
-    if (availabilityEl && state.availability) {
-        availabilityEl.textContent = (state.availability * 100).toFixed(2) + '%';
+function updateElement(id, value) {
+    const el = document.getElementById(id);
+    if (el) {
+        el.textContent = value;
     }
 }
 
 function updateInventoryFromState(inventory) {
-    console.log('📦 Updating inventory from state:', inventory);
+    console.log('📦 Updating inventory from stream:', inventory);
     
     const container = document.getElementById('inventoryTable');
     if (!container) return;
@@ -151,8 +133,8 @@ function updateInventoryFromState(inventory) {
             <thead>
                 <tr>
                     <th>Medicine ID</th>
-                    <th>Total Quantity</th>
-                    <th>Count</th>
+                    <th>Total Dispensed</th>
+                    <th>Prescription Count</th>
                     <th>Avg per Rx</th>
                 </tr>
             </thead>
@@ -170,16 +152,20 @@ function updateInventoryFromState(inventory) {
         .sort((a, b) => b.total - a.total)
         .slice(0, 10);
     
-    inventoryArray.forEach(item => {
-        html += `
-            <tr>
-                <td>${item.medicine_id}</td>
-                <td>${item.total}</td>
-                <td>${item.count}</td>
-                <td>${item.avg}</td>
-            </tr>
-        `;
-    });
+    if (inventoryArray.length === 0) {
+        html += '<tr><td colspan="4" style="text-align: center; color: #6b7280;">Start streaming to see live data</td></tr>';
+    } else {
+        inventoryArray.forEach(item => {
+            html += `
+                <tr>
+                    <td>${item.medicine_id}</td>
+                    <td>${item.total}</td>
+                    <td>${item.count}</td>
+                    <td>${item.avg}</td>
+                </tr>
+            `;
+        });
+    }
     
     html += '</tbody></table>';
     container.innerHTML = html;
@@ -211,6 +197,9 @@ function initializeCharts() {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: {
+                    duration: 0
+                },
                 scales: {
                     y: {
                         beginAtZero: true
@@ -232,16 +221,24 @@ function initializeCharts() {
                     data: [],
                     borderColor: '#10b981',
                     backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                    tension: 0.4
+                    tension: 0.4,
+                    fill: true
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: {
+                    duration: 0
+                },
                 scales: {
                     y: {
                         beginAtZero: true,
-                        max: 400
+                        max: 400,
+                        title: {
+                            display: true,
+                            text: 'Latency (ms)'
+                        }
                     }
                 }
             }
@@ -256,19 +253,27 @@ function initializeCharts() {
             data: {
                 labels: [],
                 datasets: [{
-                    label: 'Throughput (req/sec)',
+                    label: 'Throughput (k/sec)',
                     data: [],
                     borderColor: '#8b5cf6',
                     backgroundColor: 'rgba(139, 92, 246, 0.1)',
-                    tension: 0.4
+                    tension: 0.4,
+                    fill: true
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: {
+                    duration: 0
+                },
                 scales: {
                     y: {
-                        beginAtZero: true
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Throughput (k req/sec)'
+                        }
                     }
                 }
             }
@@ -290,7 +295,7 @@ function updateStreamChart(value) {
     
     streamChart.data.labels.push(now);
     streamChart.data.datasets[0].data.push(value);
-    streamChart.update('none'); // 'none' for better performance
+    streamChart.update('none');
 }
 
 function addDataToChart(chart, value) {
@@ -304,10 +309,7 @@ function addDataToChart(chart, value) {
     }
     
     chart.data.labels.push(now);
-    chart.data.datasets.forEach((dataset) => {
-        dataset.data.push(value);
-    });
-    
+    chart.data.datasets[0].data.push(value);
     chart.update('none');
 }
 
@@ -319,7 +321,7 @@ async function loadInitialData() {
     try {
         console.log('📥 Loading initial data...');
         
-        // Load medicines
+        // Load medicines - shows current inventory
         const medicinesResponse = await fetch('/api/medicines');
         const medicinesJson = await medicinesResponse.json();
         if (medicinesJson && medicinesJson.success && medicinesJson.data) {
@@ -362,10 +364,10 @@ function displayInventory(medicines) {
         let status, statusClass;
         
         if (stockRatio < 0.5) {
-            status = 'Low';
+            status = 'Critical';
             statusClass = 'status-low';
         } else if (stockRatio < 1) {
-            status = 'Medium';
+            status = 'Low';
             statusClass = 'status-high';
         } else {
             status = 'Good';
@@ -392,17 +394,19 @@ function displayAlerts(alerts) {
     if (!container) return;
     
     if (alerts.length === 0) {
-        container.innerHTML = '<p style="color: #6b7280;">No active alerts</p>';
+        container.innerHTML = '<p style="color: #6b7280; text-align: center; padding: 20px;">No active alerts</p>';
         return;
     }
     
     let html = '';
     alerts.slice(0, 10).forEach(alert => {
         const severityClass = (alert.severity || 'info').toLowerCase();
+        const severityEmoji = severityClass === 'high' ? '🔴' : severityClass === 'medium' ? '🟡' : '🔵';
+        
         html += `
             <div class="alert-item ${severityClass}">
-                <div class="alert-header">${alert.alert_type}: ${alert.medicine_id}</div>
-                <div>${alert.message}</div>
+                <div class="alert-header">${severityEmoji} ${alert.alert_type}: ${alert.medicine_id}</div>
+                <div style="margin: 5px 0;">${alert.message}</div>
                 <div class="alert-time">${new Date(alert.created_at).toLocaleString()}</div>
             </div>
         `;
@@ -411,23 +415,19 @@ function displayAlerts(alerts) {
     container.innerHTML = html;
 }
 
-function updateMetrics(stats) {
-    updateMetricsFromState(stats);
-}
-
 // ============================================================
 // EVENT LISTENERS
 // ============================================================
 
 function setupEventListeners() {
-    console.log('🎛️  Setting up event listeners...');
+    console.log('🎛️ Setting up event listeners...');
     
     // Start Streaming
     const startBtn = document.getElementById('startStreamBtn');
     if (startBtn) {
         startBtn.addEventListener('click', async () => {
             try {
-                console.log('▶️  Starting streaming...');
+                console.log('▶️ Starting streaming...');
                 
                 const response = await fetch('/api/streaming/start', {
                     method: 'POST',
@@ -446,7 +446,7 @@ function setupEventListeners() {
                     const stopBtn = document.getElementById('stopStreamBtn');
                     if (stopBtn) stopBtn.disabled = false;
                     
-                    showNotification('Streaming started! Watch the numbers update live.', 'success');
+                    showNotification('🚀 Streaming started! Watch the live updates.', 'success');
                     console.log('✅ Streaming started');
                 } else {
                     showNotification(result.error || 'Failed to start streaming', 'error');
@@ -463,7 +463,7 @@ function setupEventListeners() {
     if (stopBtn) {
         stopBtn.addEventListener('click', async () => {
             try {
-                console.log('⏹️  Stopping streaming...');
+                console.log('⏹️ Stopping streaming...');
                 
                 const response = await fetch('/api/streaming/stop', {
                     method: 'POST'
@@ -478,7 +478,7 @@ function setupEventListeners() {
                     if (startBtn) startBtn.disabled = false;
                     stopBtn.disabled = true;
                     
-                    showNotification('Streaming stopped', 'info');
+                    showNotification('⏸️ Streaming stopped', 'info');
                     console.log('✅ Streaming stopped');
                 } else {
                     showNotification(result.error || 'Failed to stop streaming', 'error');
@@ -495,7 +495,7 @@ function setupEventListeners() {
     if (optimizeBtn) {
         optimizeBtn.addEventListener('click', async () => {
             try {
-                showNotification('Running optimization...', 'info');
+                showNotification('🔄 Running optimization...', 'info');
                 
                 const medicinesResponse = await fetch('/api/medicines');
                 const medicinesJson = await medicinesResponse.json();
@@ -518,7 +518,7 @@ function setupEventListeners() {
                 if (result && result.success) {
                     displayRecommendations(result.recommendations || []);
                     showNotification(
-                        `Optimization complete! ${result.optimized_medicines || 0} recommendations generated`,
+                        `✅ Optimization complete! ${result.optimized_medicines || 0} recommendations generated`,
                         'success'
                     );
                     await loadInitialData();
@@ -540,7 +540,7 @@ function displayRecommendations(recommendations) {
     if (!container) return;
     
     if (recommendations.length === 0) {
-        container.innerHTML = '<p style="color: #6b7280;">No recommendations</p>';
+        container.innerHTML = '<p style="color: #6b7280; text-align: center; padding: 20px;">No recommendations. Run optimization first.</p>';
         return;
     }
     
@@ -559,15 +559,25 @@ function displayRecommendations(recommendations) {
     `;
     
     recommendations.forEach(rec => {
+        const priorityPercent = ((rec.priority || 0) * 100).toFixed(0);
+        const urgencyClass = (rec.urgency || 'normal').toLowerCase();
+        
         html += `
             <tr>
-                <td>${rec.medicine_id}</td>
+                <td><strong>${rec.medicine_name || rec.medicine_id}</strong></td>
                 <td>${Math.round(rec.order_quantity || 0)}</td>
-                <td>${((rec.priority || 0) * 100).toFixed(0)}%</td>
-                <td><span class="status-badge status-${(rec.urgency || 'normal').toLowerCase()}">${rec.urgency || 'NORMAL'}</span></td>
                 <td>
-                    <button class="btn btn-primary" onclick="placeOrder('${rec.medicine_id}', ${rec.order_quantity || 0})">
-                        Order
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <div style="width: 50px; height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden;">
+                            <div style="width: ${priorityPercent}%; height: 100%; background: #3b82f6;"></div>
+                        </div>
+                        <span>${priorityPercent}%</span>
+                    </div>
+                </td>
+                <td><span class="status-badge status-${urgencyClass}">${rec.urgency || 'NORMAL'}</span></td>
+                <td>
+                    <button class="btn btn-primary" onclick="placeOrder('${rec.medicine_id}', ${rec.order_quantity || 0}, '${rec.medicine_name || rec.medicine_id}')">
+                        Order Now
                     </button>
                 </td>
             </tr>
@@ -578,7 +588,7 @@ function displayRecommendations(recommendations) {
     container.innerHTML = html;
 }
 
-async function placeOrder(medicineId, quantity) {
+async function placeOrder(medicineId, quantity, medicineName) {
     try {
         const response = await fetch('/api/orders/place', {
             method: 'POST',
@@ -592,8 +602,14 @@ async function placeOrder(medicineId, quantity) {
         const result = await response.json();
         
         if (result && result.success) {
-            showNotification(`Order placed for ${medicineId}`, 'success');
+            showNotification(`✅ Order placed for ${medicineName || medicineId}`, 'success');
             await loadInitialData();
+            
+            // Refresh recommendations
+            const optimizeBtn = document.getElementById('optimizeBtn');
+            if (optimizeBtn) {
+                optimizeBtn.click();
+            }
         } else {
             showNotification(result.error || 'Failed to place order', 'error');
         }
@@ -618,6 +634,7 @@ function showNotification(message, type) {
         box-shadow: 0 5px 20px rgba(0,0,0,0.2);
         z-index: 1000;
         animation: slideIn 0.3s ease;
+        max-width: 300px;
     `;
     notification.textContent = message;
     
@@ -626,8 +643,22 @@ function showNotification(message, type) {
     setTimeout(() => {
         notification.style.animation = 'slideOut 0.3s ease';
         setTimeout(() => notification.remove(), 300);
-    }, 3000);
+    }, 4000);
 }
+
+// Add CSS animations
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from { transform: translateX(400px); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(400px); opacity: 0; }
+    }
+`;
+document.head.appendChild(style);
 
 // ============================================================
 // INITIALIZATION COMPLETE

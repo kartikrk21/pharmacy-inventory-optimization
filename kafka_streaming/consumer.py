@@ -75,4 +75,3 @@ class PrescriptionStreamProcessor:
 
             # 🔥 THIS IS WHAT YOU WERE MISSING
             self.socketio.emit("state_update", payload)
-
