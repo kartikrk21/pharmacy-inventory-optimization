@@ -1,4 +1,4 @@
-// Dashboard JavaScript - FULLY DYNAMIC VERSION
+// Dashboard JavaScript - FIXED VERSION
 const socket = io();
 
 // State
@@ -93,7 +93,7 @@ function setupSocketListeners() {
         
         // Update throughput chart
         if (throughputChart && data.throughput !== undefined) {
-            addDataToChart(throughputChart, data.throughput / 1000); // Convert to k/sec
+            addDataToChart(throughputChart, data.throughput / 1000);
         }
     });
 
@@ -197,14 +197,8 @@ function initializeCharts() {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                animation: {
-                    duration: 0
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
+                animation: { duration: 0 },
+                scales: { y: { beginAtZero: true } }
             }
         });
     }
@@ -228,17 +222,12 @@ function initializeCharts() {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                animation: {
-                    duration: 0
-                },
+                animation: { duration: 0 },
                 scales: {
                     y: {
                         beginAtZero: true,
                         max: 400,
-                        title: {
-                            display: true,
-                            text: 'Latency (ms)'
-                        }
+                        title: { display: true, text: 'Latency (ms)' }
                     }
                 }
             }
@@ -264,16 +253,11 @@ function initializeCharts() {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                animation: {
-                    duration: 0
-                },
+                animation: { duration: 0 },
                 scales: {
                     y: {
                         beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Throughput (k req/sec)'
-                        }
+                        title: { display: true, text: 'Throughput (k req/sec)' }
                     }
                 }
             }
@@ -319,18 +303,19 @@ function addDataToChart(chart, value) {
 
 async function loadInitialData() {
     try {
-        console.log('📥 Loading initial data...');
+        console.log('🔥 Loading initial data...');
         
-        // Load medicines - shows current inventory
+        // Load medicines
         const medicinesResponse = await fetch('/api/medicines');
         const medicinesJson = await medicinesResponse.json();
         if (medicinesJson && medicinesJson.success && medicinesJson.data) {
             displayInventory(medicinesJson.data);
         }
 
-        // Load alerts
+        // Load alerts - FIXED
         const alertsResponse = await fetch('/api/alerts');
         const alertsJson = await alertsResponse.json();
+        console.log('Alerts response:', alertsJson);
         if (alertsJson && alertsJson.success && alertsJson.data) {
             displayAlerts(alertsJson.data);
         }
@@ -393,8 +378,10 @@ function displayAlerts(alerts) {
     const container = document.getElementById('alertsList');
     if (!container) return;
     
-    if (alerts.length === 0) {
-        container.innerHTML = '<p style="color: #6b7280; text-align: center; padding: 20px;">No active alerts</p>';
+    console.log('Displaying alerts:', alerts);
+    
+    if (!alerts || alerts.length === 0) {
+        container.innerHTML = '<p style="color: #6b7280; text-align: center; padding: 20px;">No active alerts. Start streaming to generate alerts.</p>';
         return;
     }
     
@@ -404,10 +391,10 @@ function displayAlerts(alerts) {
         const severityEmoji = severityClass === 'high' ? '🔴' : severityClass === 'medium' ? '🟡' : '🔵';
         
         html += `
-            <div class="alert-item ${severityClass}">
-                <div class="alert-header">${severityEmoji} ${alert.alert_type}: ${alert.medicine_id}</div>
-                <div style="margin: 5px 0;">${alert.message}</div>
-                <div class="alert-time">${new Date(alert.created_at).toLocaleString()}</div>
+            <div class="alert-item ${severityClass}" style="padding: 12px; margin-bottom: 10px; border-left: 4px solid ${severityClass === 'high' ? '#ef4444' : severityClass === 'medium' ? '#f59e0b' : '#3b82f6'}; background: #f9fafb; border-radius: 4px;">
+                <div class="alert-header" style="font-weight: bold; margin-bottom: 5px;">${severityEmoji} ${alert.alert_type}: ${alert.medicine_id}</div>
+                <div style="margin: 5px 0; color: #374151;">${alert.message}</div>
+                <div class="alert-time" style="font-size: 12px; color: #6b7280;">${new Date(alert.created_at).toLocaleString()}</div>
             </div>
         `;
     });
@@ -490,11 +477,12 @@ function setupEventListeners() {
         });
     }
 
-    // Run Optimization
+    // Run Optimization - FIXED
     const optimizeBtn = document.getElementById('optimizeBtn');
     if (optimizeBtn) {
         optimizeBtn.addEventListener('click', async () => {
             try {
+                console.log('🔄 Running optimization...');
                 showNotification('🔄 Running optimization...', 'info');
                 
                 const medicinesResponse = await fetch('/api/medicines');
@@ -507,6 +495,8 @@ function setupEventListeners() {
                 const medicines = medicinesJson.data || [];
                 const medicineIds = medicines.map(m => m.medicine_id).slice(0, 20);
                 
+                console.log('Optimizing for medicines:', medicineIds);
+                
                 const response = await fetch('/api/optimize', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -514,9 +504,12 @@ function setupEventListeners() {
                 });
                 
                 const result = await response.json();
+                console.log('Optimization result:', result);
                 
                 if (result && result.success) {
-                    displayRecommendations(result.recommendations || []);
+                    const recs = result.recommendations || [];
+                    console.log('Recommendations:', recs);
+                    displayRecommendations(recs);
                     showNotification(
                         `✅ Optimization complete! ${result.optimized_medicines || 0} recommendations generated`,
                         'success'
@@ -539,7 +532,9 @@ function displayRecommendations(recommendations) {
     const container = document.getElementById('recommendationsTable');
     if (!container) return;
     
-    if (recommendations.length === 0) {
+    console.log('Displaying recommendations:', recommendations);
+    
+    if (!recommendations || recommendations.length === 0) {
         container.innerHTML = '<p style="color: #6b7280; text-align: center; padding: 20px;">No recommendations. Run optimization first.</p>';
         return;
     }
@@ -590,6 +585,8 @@ function displayRecommendations(recommendations) {
 
 async function placeOrder(medicineId, quantity, medicineName) {
     try {
+        console.log(`Placing order: ${medicineId} x ${quantity}`);
+        
         const response = await fetch('/api/orders/place', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -659,9 +656,5 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
-
-// ============================================================
-// INITIALIZATION COMPLETE
-// ============================================================
 
 console.log('✅ Dashboard JavaScript loaded and initialized');
